@@ -21,6 +21,9 @@ import Data.List hiding ( union )
 data Set a = SetI [a]
   deriving Eq
 
+instance (Show a) => Show (Set a) where
+  show = showSet
+
 -- empty
 empty  :: Set a
 empty         = SetI []
@@ -115,8 +118,8 @@ foldSet :: (a -> a -> a) -> a -> Set a -> a
 foldSet f x (SetI xs) = (foldr f x xs)
 
 -- showSet   
-showSet :: Show a => Set a -> IO ()
-showSet (SetI xs) = putStr $ concat (map ((++ "\n") . show) xs)
+showSet :: Show a => Set a -> String
+showSet (SetI xs) = concat (map ((++ "\n") . show) xs)
 
 -- card      
 card :: Set a -> Int
