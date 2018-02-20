@@ -35,12 +35,12 @@ epsilonClosure_s (NFA _ ts _ _) s = makeSet $ epsilonClosure_s' (flatten ts) s
 
 -- epsilonClosure_s' :: Eq state => [Transition state] -> state -> Set state
 epsilonClosure_s' :: Ord state => [Transition state] -> state -> [state]
-epsilonClosure_s' [] _ = []
+epsilonClosure_s'  []  _   = []
 epsilonClosure_s' (x:xs) s
-  | isEpsilon x = s : epsilonClosure_s' xs s
-  | otherwise   = []
+  | isEpsilon x && s0 == s = s1 : epsilonClosure_s' xs s
+  | otherwise              = epsilonClosure_s' xs s
   where
-    (s0, _) = getStates x
+    (s0, s1) = getStates x
 
 -- epsilonClosure(T) :: Eq state => NFA state -> Transition state -> Set state
 
