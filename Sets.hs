@@ -1,7 +1,6 @@
 module Sets (
-    Set                   , -- 
-    empty                 , --          Set a
-    single                , --          a -> Set a
+    Set                   , --           Set a
+    empty                 , --           Set a
     memberOf              , -- Ord a  => a -> Set a -> Bool
     union, inter, diff    , -- Ord a  => Set a -> Set a -> Set a
     subSet                , -- Ord a  => Set a -> Set a -> Bool
@@ -27,10 +26,6 @@ instance (Show a) => Show (Set a) where
 -- empty
 empty  :: Set a
 empty         = Set []
-
--- sing
-single :: a -> Set a
-single x      = Set [x]
 
 -- memberOf (member of)
 memberOf :: Ord a => a -> Set a -> Bool
