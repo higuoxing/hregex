@@ -1,0 +1,5 @@
+.stack-work/
+Haskell-re.cabal
+*~
+*.o
+*.swp
