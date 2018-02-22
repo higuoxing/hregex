@@ -1,6 +1,8 @@
 module Main where
 
-import Lib
+import Regex
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 main :: IO ()
-main = someFunc
+main = someFunction

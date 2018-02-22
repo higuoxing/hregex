@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTs #-}
 
-module Automata (
+module Regex.Automata (
     Automata           ,
     Transition         ,
     isEpsilon          ,
@@ -41,8 +41,6 @@ getEdgeChar (Epsilon _ _) = Nothing
 
 -- epsilonClosure(s) :: Ord state => Automata state -> state -> Set state
 -- set of state that transfered from state s via epsilon edge
-epsilonClosure_s :: Ord state => Automata state -> state -> Set state
-epsilonClosure_s (Automata ss ts s_ terms) s
 
 showAutomata :: (Show state) => Automata state -> String
 showAutomata (Automata ss ts s_ terms) 
@@ -54,3 +52,4 @@ showAutomata (Automata ss ts s_ terms)
                show s_  ++      "\n" ++
                "acceptable states  " ++
                show terms
+
