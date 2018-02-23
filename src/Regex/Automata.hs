@@ -38,16 +38,30 @@ isEpsilon :: Transition state -> Bool
 isEpsilon (Edge _ _ _)  = False
 isEpsilon (Epsilon _ _) = True
 
--- indicates epsilon edge from state s
-isEpsilonFrom :: Eq state => Transition state -> state -> Bool
-isEpsilonFrom (Edge _ _ _) _    = False
-isEpsilonFrom (Epsilon s0 s1) s = s0 == s
+-- indicates epsilon move from state s
+isEpsilonMoveFrom :: Eq state => Transition state -> state -> Bool
+isEpsilonMoveFrom (Edge _ _ _) _    = False
+isEpsilonMoveFrom (Epsilon s0 s1) s = s0 == s
 
 -- one epsilon move from state s
 epsilonMoveFrom :: (Eq state, Ord state) => Set (Transition state) -> state -> Set state
 epsilonMoveFrom ts s = Set.foldr f Set.empty ts
   where
-    f t set | t `isEpsilonFrom` s = let (s0, s1) = getStates t in Set.insert s1 set
+    f t set | t `isEpsilonMoveFrom` s = let (s0, s1) = getStates t in Set.insert s1 set
+            | otherwise = set
+
+-- indicates transition from state s via c
+isTransitionMoveFrom :: Eq state => Transition state -> state -> Char -> Bool
+isTransitionMoveFrom (Epsilon _ _) s c  = False
+isTransitionMoveFrom (Edge s0 e s1) s c = s0 == s && e == c 
+
+-- one transition from state s via c
+transitionFrom :: (Eq state, Ord state) => Set (Transition state) -> state -> Char -> Set state
+transitionFrom ts s c = Set.foldr f Set.empty ts
+  where
+    f t set | isTransitionMoveFrom t s c
+              = let (s0, s1) = getStates t 
+                in Set.insert s1 set
             | otherwise = set
 
 -- get two states if an edge
@@ -61,19 +75,26 @@ getEdgeChar (Edge _ c _)  = Just c
 getEdgeChar (Epsilon _ _) = Nothing
 
 -- epsilonClosure(s) :: Ord state => Automata state -> Set state -> Set state
--- set of state that transfered from state s via epsilon edge
-epsilonClosure_s :: Ord state => Automata state -> Set state -> Set state
-epsilonClosure_s (Automata ss_ ts s_ terms) ss = epsilonClosure_s' 
+-- set of states that transfered from state s via epsilon edge
+epsilonClosure_T :: Ord state => Automata state -> Set state -> Set state
+epsilonClosure_T (Automata ss_ ts s_ terms) ss = epsilonClosure_T' 
                                                  (Set.filter isEpsilon ts) 
                                                  (Set.toList ss) ss
 
-epsilonClosure_s' :: Ord state => Set (Transition state) -> [state] -> Set state -> Set state
-epsilonClosure_s' ts [] ss = ss
-epsilonClosure_s' ts (st:stack) ss = epsilonClosure_s' ts stack' ss'
+epsilonClosure_T' :: Ord state => Set (Transition state) -> [state] -> Set state -> Set state
+epsilonClosure_T' ts [] ss = ss
+epsilonClosure_T' ts (st:stack) ss = epsilonClosure_T' ts stack' ss'
   where
     epm    = epsilonMoveFrom ts st
     ss'    = Set.union ss epm
     stack' = stack ++ Set.toList (Set.difference ss' ss)
+
+-- move(T, c, s) :: Ord state => Automata state -> Set state -> Char -> Set state
+-- set of states that transifered from state s via Char c
+move_T :: Ord state => Automata state -> Set state -> Char -> Set state
+move_T (Automata ss_ ts s_ terms) ss c = Set.foldr f Set.empty ss
+  where
+    f x set = Set.union set (transitionFrom ts x c)
 
 -- print automata
 showAutomata :: (Show state) => Automata state -> String
