@@ -1,8 +1,8 @@
 {-# LANGUAGE GADTs #-}
 
 module Regex.Automata (
-    Automata           ,  -- Automata states transitions (initial state) (final states)
-    Transition         ,  -- Transitions
+    Automata    (..)   ,  -- Automata states transitions (initial state) (final states)
+    Transition  (..)   ,  -- Transitions
     isEpsilon          ,  -- Indicates epsilon edge
     getStates          ,  -- Get two states of an edge
     getEdgeChar        ,  -- Get Char of an edge
