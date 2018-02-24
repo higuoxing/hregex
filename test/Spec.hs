@@ -9,6 +9,7 @@ main =
   do {
        let nfa = Automata.Automata 
                           (Set.fromList [0..10])
+                          (Set.fromList ['a', 'b'])
                           (Set.fromList [
                             -- (a|b)*abb
                             Automata.Epsilon 0  1  ,
@@ -27,6 +28,12 @@ main =
                           ])
                           0
                           (Set.fromList [10])
-    ; putStrLn "\ntest NFA is :"
-    ; putStr (show nfa)
+    ; putStrLn "\ntest NFA is                 :"
+    ; putStrLn (show nfa)
+    ; let set_A = Automata.epsilonClosure_T nfa (Set.fromList [0])
+    ; putStrLn ("\nepsilon-closure(0)            :" ++ (show set_A))
+    ; let move_A_a = Automata.move_T nfa set_A 'a'
+    ; putStrLn ("move(A, a)                    :" ++ (show move_A_a))
+    ; let set_B = Automata.epsilonClosure_T nfa move_A_a
+    ; putStrLn ("epsilon-closure(move(A, a))   :" ++ (show set_B))
   }

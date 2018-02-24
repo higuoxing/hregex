@@ -6,6 +6,8 @@ module Regex.Automata (
     isEpsilon          ,  -- Indicates epsilon edge
     getStates          ,  -- Get two states of an edge
     getEdgeChar        ,  -- Get Char of an edge
+    epsilonClosure_T   ,  -- Get the epsilon closure of a set of state
+    move_T             ,  -- Get the set of state that transfer from state s via Char a
     showAutomata          -- Print automata
     ) where
 
@@ -14,12 +16,14 @@ import qualified Data.Set as Set
 
 -- Finite Automata
 -- 1. Finite set of states
--- 2. Transition functions (state --(char | epsilon)--> next state)
--- 3. Initial state
--- 4. Subset of finite set of states which are final states
+-- 2. Set of input char 
+-- 3. Transition functions (state --(char | epsilon)--> next state)
+-- 4. Initial state
+-- 5. Subset of finite set of states which are final states
 data Automata state where
   Automata :: (Ord state, Show state) 
            => Set state
+           -> Set Char 
            -> Set (Transition state)
            -> state
            -> Set state
@@ -32,6 +36,16 @@ instance Show state => Show (Automata state) where
 data Transition state = Edge state Char state
                       | Epsilon state state
   deriving (Ord, Eq, Show)
+
+-- get two states if an edge
+getStates :: Transition state -> (state, state)
+getStates (Edge s0 _ s1)  = (s0, s1)
+getStates (Epsilon s0 s1) = (s0, s1)
+
+-- get transition char
+getEdgeChar :: Transition state -> Maybe Char
+getEdgeChar (Edge _ c _)  = Just c
+getEdgeChar (Epsilon _ _) = Nothing
 
 -- indicates epsilon edge
 isEpsilon :: Transition state -> Bool
@@ -64,22 +78,12 @@ transitionFrom ts s c = Set.foldr f Set.empty ts
                 in Set.insert s1 set
             | otherwise = set
 
--- get two states if an edge
-getStates :: Transition state -> (state, state)
-getStates (Edge s0 _ s1)  = (s0, s1)
-getStates (Epsilon s0 s1) = (s0, s1)
-
--- get transition char
-getEdgeChar :: Transition state -> Maybe Char
-getEdgeChar (Edge _ c _)  = Just c
-getEdgeChar (Epsilon _ _) = Nothing
-
 -- epsilonClosure(s) :: Ord state => Automata state -> Set state -> Set state
 -- set of states that transfered from state s via epsilon edge
 epsilonClosure_T :: Ord state => Automata state -> Set state -> Set state
-epsilonClosure_T (Automata ss_ ts s_ terms) ss = epsilonClosure_T' 
-                                                 (Set.filter isEpsilon ts) 
-                                                 (Set.toList ss) ss
+epsilonClosure_T (Automata ss_ cs ts s_ terms) ss = epsilonClosure_T' 
+                                                    (Set.filter isEpsilon ts) 
+                                                    (Set.toList ss) ss
 
 epsilonClosure_T' :: Ord state => Set (Transition state) -> [state] -> Set state -> Set state
 epsilonClosure_T' ts [] ss = ss
@@ -92,15 +96,17 @@ epsilonClosure_T' ts (st:stack) ss = epsilonClosure_T' ts stack' ss'
 -- move(T, c, s) :: Ord state => Automata state -> Set state -> Char -> Set state
 -- set of states that transifered from state s via Char c
 move_T :: Ord state => Automata state -> Set state -> Char -> Set state
-move_T (Automata ss_ ts s_ terms) ss c = Set.foldr f Set.empty ss
+move_T (Automata ss_ cs ts s_ terms) ss c = Set.foldr f Set.empty ss
   where
     f x set = Set.union set (transitionFrom ts x c)
 
 -- print automata
 showAutomata :: (Show state) => Automata state -> String
-showAutomata (Automata ss ts s_ terms) 
+showAutomata (Automata ss cs ts s_ terms) 
              = "states:            " ++ 
                show ss  ++      "\n" ++
+               "input chars:       " ++
+               show cs  ++      "\n" ++
                "transitions:       " ++
                show ts  ++      "\n" ++
                "initial state:     " ++
