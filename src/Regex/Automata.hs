@@ -100,6 +100,55 @@ move_T (Automata ss_ cs ts s_ terms) ss c = Set.foldr f Set.empty ss
   where
     f x set = Set.union set (transitionFrom ts x c)
 
+-- transform NFA to DFA using subset construction
+--subsetConstruct :: (Ord state, Eq state) => Automata state -> Automata (Set state)
+--subsetConstruct (Automata ss_ cs ts s_ terms) = 
+subsetConstruct' nfa@(Automata ss cs ts s_ terms) dfa@(Automata dss dcs dts ds_ dterms) udss
+  | Set.null udss = dfa
+  | otherwise = subsetConstruct' nfa (Automata dss' dcs' dts' ds_ dterms') udss'
+    where
+      (tset, udss'') = popDstate udss                 -- pop T from unmarked Dstates
+      dss'           = addDstate tset dss                     -- mark dstate
+      dcs'           = dcs                            -- just copy dcs
+      (udss', dts')  = addTrans nfa (Set.toList dcs) tset dts udss''
+      dterms'        = if isTerm tset terms then              -- add dterms
+                         addDstate tset dterms
+                       else dterms
+
+addTrans :: (Ord state, Eq state) 
+         => Automata state 
+         -> [Char] 
+         -> Set state
+         -> Set (Transition (Set state))
+         -> Set (Set state)
+         -> (Set (Set state), Set (Transition (Set state)))
+addTrans nfa@(Automata ss ncs ts s_ terms)   []   d dts uds = (uds, dts)
+addTrans nfa@(Automata ss ncs ts s_ terms) (c:cs) d dts uds
+  = addTrans nfa cs d dts' uds'
+  where
+    u    = epsilonClosure_T nfa (move_T nfa d c)
+    uds' = Set.insert u uds'
+    dts' = Set.insert (Edge d c u) dts
+
+-- add terminate states from dfa
+
+-- indicates terminate state
+-- isTerm :: dstate -> NFA Terms -> Bool
+isTerm :: (Ord state, Eq state) => Set state -> Set state -> Bool
+isTerm ds terms = not . Set.null $ Set.intersection ds terms
+
+-- pop a Dstate out from umarked dstates
+popDstate :: (Ord dstate, Eq dstate) => Set dstate -> (dstate, Set dstate)
+popDstate dsets = (Set.elemAt 0 dsets, Set.drop 1 dsets)
+
+-- add marked Dstate
+addDstate :: (Ord dstate, Eq dstate) => dstate -> Set dstate -> Set dstate
+addDstate = Set.insert
+
+-- add unmarked Dstate
+addUDstate :: (Ord dstate, Eq dstate) => dstate -> Set dstate -> Set dstate
+addUDstate = Set.insert
+
 -- print automata
 showAutomata :: (Show state) => Automata state -> String
 showAutomata (Automata ss cs ts s_ terms) 
