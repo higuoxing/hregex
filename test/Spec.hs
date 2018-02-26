@@ -36,4 +36,9 @@ main =
     ; putStrLn ("move(A, a)                    :" ++ (show move_A_a))
     ; let set_B = Automata.epsilonClosure_T nfa move_A_a
     ; putStrLn ("epsilon-closure(move(A, a))   :" ++ (show set_B))
+    
+    ; let dfa = Automata.subsetConstruct nfa
+    --; putStrLn (show dfa)
+    ; putStrLn "test"
+    ; putStrLn (show dfa)
   }

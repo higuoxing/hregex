@@ -3,6 +3,7 @@
 module Regex.Automata (
     Automata    (..)   ,  -- Automata states transitions (initial state) (final states)
     Transition  (..)   ,  -- Transitions
+    subsetConstruct    ,  -- Subset construction
     isEpsilon          ,  -- Indicates epsilon edge
     getStates          ,  -- Get two states of an edge
     getEdgeChar        ,  -- Get Char of an edge
@@ -101,8 +102,19 @@ move_T (Automata ss_ cs ts s_ terms) ss c = Set.foldr f Set.empty ss
     f x set = Set.union set (transitionFrom ts x c)
 
 -- transform NFA to DFA using subset construction
---subsetConstruct :: (Ord state, Eq state) => Automata state -> Automata (Set state)
---subsetConstruct (Automata ss_ cs ts s_ terms) = 
+subsetConstruct
+  :: (Ord state, Eq state) => Automata state
+    -> Automata (Set state)
+subsetConstruct nfa@(Automata ss cs ts s_ terms)
+  = subsetConstruct' nfa iniDFA iniUdss
+  where
+    iniDFA  = Automata (Set.empty) cs (Set.empty) (s_ini) (Set.empty)
+    s_ini   = epsilonClosure_T nfa (Set.fromList [s_])
+    iniUdss = Set.fromList [s_ini]
+    
+subsetConstruct'
+  :: (Ord state, Eq state) => Automata state
+    -> Automata (Set state) -> Set (Set state) -> Automata (Set state)
 subsetConstruct' nfa@(Automata ss cs ts s_ terms) dfa@(Automata dss dcs dts ds_ dterms) udss
   | Set.null udss = dfa
   | otherwise = subsetConstruct' nfa (Automata dss' dcs' dts' ds_ dterms') udss'
@@ -110,27 +122,29 @@ subsetConstruct' nfa@(Automata ss cs ts s_ terms) dfa@(Automata dss dcs dts ds_ 
       (tset, udss'') = popDstate udss                 -- pop T from unmarked Dstates
       dss'           = addDstate tset dss                     -- mark dstate
       dcs'           = dcs                            -- just copy dcs
-      (udss', dts')  = addTrans nfa (Set.toList dcs) tset dts udss''
+      (udss', dts')  = addTrans nfa (Set.toList dcs) tset dss' dts udss''
       dterms'        = if isTerm tset terms then              -- add dterms
                          addDstate tset dterms
                        else dterms
 
+-- add transition edge to dfa
 addTrans :: (Ord state, Eq state) 
-         => Automata state 
-         -> [Char] 
-         -> Set state
-         -> Set (Transition (Set state))
-         -> Set (Set state)
-         -> (Set (Set state), Set (Transition (Set state)))
-addTrans nfa@(Automata ss ncs ts s_ terms)   []   d dts uds = (uds, dts)
-addTrans nfa@(Automata ss ncs ts s_ terms) (c:cs) d dts uds
-  = addTrans nfa cs d dts' uds'
+         => Automata state                                   -- nfa
+         -> [Char]                                           -- input char set
+         -> Set state                                        -- Dstate
+         -> Set (Set state)                                  -- current Dstate
+         -> Set (Transition (Set state))                     -- DFA transition set
+         -> Set (Set state)                                  -- new Dstate
+         -> (Set (Set state), Set (Transition (Set state)))  -- 
+addTrans nfa@(Automata ss ncs ts s_ terms)   []   d ds dts uds = (uds, dts)
+addTrans nfa@(Automata ss ncs ts s_ terms) (c:cs) d ds dts uds
+  = addTrans nfa cs d ds dts' uds'
   where
     u    = epsilonClosure_T nfa (move_T nfa d c)
-    uds' = Set.insert u uds'
     dts' = Set.insert (Edge d c u) dts
-
--- add terminate states from dfa
+    uds' = if Set.member u ds then
+             uds
+           else Set.insert u uds
 
 -- indicates terminate state
 -- isTerm :: dstate -> NFA Terms -> Bool
