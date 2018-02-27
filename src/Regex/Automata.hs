@@ -13,7 +13,7 @@ module Regex.Automata (
     ) where
 
 import Data.Set (Set)
-import qualified Data.Set as Set
+  import qualified Data.Set as Set
 
 -- Finite Automata
 -- 1. Finite set of states
@@ -119,11 +119,11 @@ subsetConstruct' nfa@(Automata ss cs ts s_ terms) dfa@(Automata dss dcs dts ds_ 
   | Set.null udss = dfa
   | otherwise = subsetConstruct' nfa (Automata dss' dcs' dts' ds_ dterms') udss'
     where
-      (tset, udss'') = popDstate udss                 -- pop T from unmarked Dstates
-      dss'           = addDstate tset dss                     -- mark dstate
-      dcs'           = dcs                            -- just copy dcs
-      (udss', dts')  = addTrans nfa (Set.toList dcs) tset dss' dts udss''
-      dterms'        = if isTerm tset terms then              -- add dterms
+      (tset, udss'') = popDstate udss                                     -- pop T from unmarked Dstates
+      dss'           = addDstate tset dss                                 -- mark dstate
+      dcs'           = dcs                                                -- just copy dcs
+      (udss', dts')  = addTrans nfa (Set.toList dcs) tset dss' dts udss'' -- add transitions
+      dterms'        = if isTerm tset terms then                          -- add dterms
                          addDstate tset dterms
                        else dterms
 
