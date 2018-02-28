@@ -13,7 +13,7 @@ module Regex.Automata (
     ) where
 
 import Data.Set (Set)
-  import qualified Data.Set as Set
+import qualified Data.Set as Set
 
 -- Finite Automata
 -- 1. Finite set of states
