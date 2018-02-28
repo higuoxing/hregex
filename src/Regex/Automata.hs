@@ -34,6 +34,8 @@ instance Show state => Show (Automata state) where
   show = showAutomata
 
 -- Transitions 
+-- Edge    s0 --ch--> s1
+-- Epsilon s0 ------> s1
 data Transition state = Edge state Char state
                       | Epsilon state state
   deriving (Ord, Eq, Show)
@@ -74,10 +76,10 @@ isTransitionMoveFrom (Edge s0 e s1) s c = s0 == s && e == c
 transitionFrom :: (Eq state, Ord state) => Set (Transition state) -> state -> Char -> Set state
 transitionFrom ts s c = Set.foldr f Set.empty ts
   where
-    f t set | isTransitionMoveFrom t s c
-              = let (s0, s1) = getStates t 
-                in Set.insert s1 set
+    f t set | isTransitionMoveFrom t s c = Set.insert s1 set
             | otherwise = set
+            where
+              (s0, s1) = getStates t
 
 -- epsilonClosure(s) :: Ord state => Automata state -> Set state -> Set state
 -- set of states that transfered from state s via epsilon edge
@@ -111,7 +113,7 @@ subsetConstruct nfa@(Automata ss cs ts s_ terms)
     iniDFA  = Automata (Set.empty) cs (Set.empty) (s_ini) (Set.empty)
     s_ini   = epsilonClosure_T nfa (Set.fromList [s_])
     iniUdss = Set.fromList [s_ini]
-    
+
 subsetConstruct'
   :: (Ord state, Eq state) => Automata state
     -> Automata (Set state) -> Set (Set state) -> Automata (Set state)
@@ -123,8 +125,7 @@ subsetConstruct' nfa@(Automata ss cs ts s_ terms) dfa@(Automata dss dcs dts ds_ 
       dss'           = addDstate tset dss                                 -- mark dstate
       dcs'           = dcs                                                -- just copy dcs
       (udss', dts')  = addTrans nfa (Set.toList dcs) tset dss' dts udss'' -- add transitions
-      dterms'        = if isTerm tset terms then                          -- add dterms
-                         addDstate tset dterms
+      dterms'        = if isTerm tset terms then addDstate tset dterms    -- add Dterms
                        else dterms
 
 -- add transition edge to dfa
@@ -137,13 +138,11 @@ addTrans :: (Ord state, Eq state)
          -> Set (Set state)                                  -- new Dstate
          -> (Set (Set state), Set (Transition (Set state)))  -- 
 addTrans nfa@(Automata ss ncs ts s_ terms)   []   d ds dts uds = (uds, dts)
-addTrans nfa@(Automata ss ncs ts s_ terms) (c:cs) d ds dts uds
-  = addTrans nfa cs d ds dts' uds'
+addTrans nfa@(Automata ss ncs ts s_ terms) (c:cs) d ds dts uds = addTrans nfa cs d ds dts' uds'
   where
     u    = epsilonClosure_T nfa (move_T nfa d c)
     dts' = Set.insert (Edge d c u) dts
-    uds' = if Set.member u ds then
-             uds
+    uds' = if Set.member u ds then uds
            else Set.insert u uds
 
 -- indicates terminate state
