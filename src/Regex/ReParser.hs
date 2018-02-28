@@ -29,4 +29,3 @@ import Regex.Automata (Automata)
     - <range>          ::= <char> "-" <char>
     -}
 
-
