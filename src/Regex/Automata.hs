@@ -141,8 +141,9 @@ addTrans nfa@(Automata ss ncs ts s_ terms)   []   d ds dts uds = (uds, dts)
 addTrans nfa@(Automata ss ncs ts s_ terms) (c:cs) d ds dts uds = addTrans nfa cs d ds dts' uds'
   where
     u    = epsilonClosure_T nfa (move_T nfa d c)
-    dts' = Set.insert (Edge d c u) dts
-    uds' = if Set.member u ds then uds
+    dts' = if (Set.null u) then dts 
+           else Set.insert (Edge d c u) dts
+    uds' = if (Set.member u ds || Set.null u) then uds
            else Set.insert u uds
 
 -- indicates terminate state
