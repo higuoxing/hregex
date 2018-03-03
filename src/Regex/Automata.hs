@@ -166,14 +166,14 @@ addUDstate = Set.insert
 -- print automata
 showAutomata :: (Show state) => Automata state -> String
 showAutomata (Automata ss cs ts s_ terms) 
-             = "states:            " ++ 
+             = "states            :" ++ 
                show ss  ++      "\n" ++
-               "input chars:       " ++
+               "input chars       :" ++
                show cs  ++      "\n" ++
-               "transitions:       " ++
+               "transitions       :" ++
                show ts  ++      "\n" ++
-               "initial state:     " ++
+               "initial state     :" ++
                show s_  ++      "\n" ++
-               "acceptable states  " ++
+               "acceptable states :" ++
                show terms
 
