@@ -83,9 +83,11 @@ item = Parser $ \s ->
     []     -> []
     (c:cs) -> [(c, cs)]
 
+-- parse a determined char
 char :: Char -> Parser Char
 char c = satisfy (c ==)
 
+-- parse a determined string
 string :: String -> Parser String
 string []     = return []
 string (c:cs) = do { char c; string cs; return (c:cs) }
@@ -97,12 +99,15 @@ satisfy p = item `bind` \c ->
     unit c
   else (Parser (\cs -> []))
 
+-- take p as token
 token :: Parser a -> Parser a
 token p = do { a <- p; return a }
 
+-- reserved token
 reserved :: String -> Parser String
 reserved s = token (string s)
 
+-- parse "(" and ")"
 parens :: Parser a -> Parser a
 parens m = do 
   reserved "("
@@ -110,6 +115,7 @@ parens m = do
   reserved ")"
   return n
 
+-- one char from a string
 oneOf :: [Char] -> Parser Char
 oneOf s = satisfy (flip elem s)
 
@@ -141,13 +147,122 @@ oneOf s = satisfy (flip elem s)
 --             | Con RegExpr RegExpr
 --             | Star RegExpr
 
+-- allowed ascii chars
 chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+regex :: Parser RegexPattern.RegExpr
+regex = do
+  u <- re_union
+  return u
+  <|> do
+  s <- simpleRe
+  return s
+
+re_union :: Parser RegexPattern.RegExpr
+re_union = do
+  s0 <- simpleRe
+  reserved "|"
+  s1 <- simpleRe
+  s2 <- simpleReTail
+  return $ RegexPattern.Alt s0 $ RegexPattern.Con s1 s2
+
+simpleReTail :: Parser RegexPattern.RegExpr
+simpleReTail = do
+  reserved "|"
+  s0 <- simpleRe
+  s1 <- simpleReTail
+  return $ RegexPattern.Con s0 s1
+  <|> do
+  return RegexPattern.Epsilon
+
+simpleRe :: Parser RegexPattern.RegExpr
+simpleRe = do
+  c <- concatenation
+  return c
+  <|> do
+  b <- basicRe
+  return b
+
+concatenation :: Parser RegexPattern.RegExpr
+concatenation = do
+  b0 <- basicRe
+  b1 <- basicRe
+  t  <- tailRe
+  return $ RegexPattern.Con b0 $ RegexPattern.Con b1 t
+
+tailRe :: Parser RegexPattern.RegExpr
+tailRe = do
+  b0 <- basicRe
+  t <- tailRe
+  return $ RegexPattern.Con b0 t
+  <|> do
+  return RegexPattern.Epsilon
+
+-- basic-re from BNF regex
+basicRe :: Parser RegexPattern.RegExpr
+basicRe = do
+  s <- star
+  return s
+  <|> do
+  s <- plus
+  return s
+  <|> do
+  s <- elementaryRe
+  return s
+
+plus :: Parser RegexPattern.RegExpr
+plus = do
+  e <- elementaryRe
+  reserved "+"
+  return $ RegexPattern.Alt e (RegexPattern.Star e)
+
+-- star from BNF regex
+star :: Parser RegexPattern.RegExpr
+star = do
+  e <- elementaryRe
+  reserved "*"
+  return $ RegexPattern.Star e
+
+-- elementaryRe :: Parser RegexPattern
+elementaryRe :: Parser RegexPattern.RegExpr
+elementaryRe = do
+  g <- group
+  return g
+  <|> do
+  c <- anyChar
+  return c
+  <|> do
+  c <- re_char
+  return c
+  <|> do
+  c <- re_set
+  return c
+
+group :: Parser RegexPattern.RegExpr
+group = do
+  reserved "("
+  r <- regex
+  reserved ")"
+  return r
+
+-- any from BNF regex
+anyChar :: Parser RegexPattern.RegExpr
+anyChar = do
+  reserved "."
+  return $ pset $ Set.fromList chars
+
+re_char :: Parser RegexPattern.RegExpr
+re_char = do
+  c <- literal
+  return (RegexPattern.Literal c)
+
+-- parse a literal from regex
 literal :: Parser Char
 literal = do
   c <- oneOf chars
   return c
 
+-- parse a set or a negative set
 pset :: Set Char -> RegexPattern.RegExpr
 pset s
   | Set.null cs  = RegexPattern.Literal c
@@ -155,9 +270,20 @@ pset s
   where
     (c, cs) = pop s
 
+-- pop a char from a Set
 pop :: Set Char -> (Char, Set Char)
 pop s = (Set.elemAt 0 s, Set.deleteAt 0 s)
 
+-- set from BNF regex
+re_set :: Parser RegexPattern.RegExpr
+re_set = do
+  ps <- postive_set
+  return ps
+  <|> do
+  ns <- negative_set
+  return ns
+
+-- positive-set from BNF regex
 postive_set :: Parser RegexPattern.RegExpr
 postive_set = do
   reserved "["
@@ -165,12 +291,15 @@ postive_set = do
   reserved "]"
   return $ pset s
 
-negtive_set = do
+-- negative-set from BNF regex
+negative_set :: Parser RegexPattern.RegExpr
+negative_set = do
   reserved "[^"
   s <- set_items
   reserved "]"
   return $ pset (Set.difference (Set.fromList chars) (s))
 
+-- set-items from BNF regex
 set_items :: Parser (Set Char)
 set_items = do
   s <- set_item
@@ -180,6 +309,7 @@ set_items = do
   s <- set_item
   return s
 
+-- set-item from BNF regex
 set_item :: Parser (Set Char)
 set_item = do
   r <- range
@@ -188,7 +318,7 @@ set_item = do
   c <- literal
   return $ Set.fromList [c]
 
--- range :: Parser RegexPattern.RegExpr
+-- range from BNF regex
 range :: Parser [Char]
 range = do
   low  <- oneOf chars
