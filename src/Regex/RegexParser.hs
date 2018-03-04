@@ -110,6 +110,9 @@ parens m = do
   reserved ")"
   return n
 
+oneOf :: [Char] -> Parser Char
+oneOf s = satisfy (flip elem s)
+
 {-
   - BNF Grammer of Regular Expressions
     - <RE>             ::= <union> | <simple-RE>
@@ -138,11 +141,7 @@ parens m = do
 --             | Con RegExpr RegExpr
 --             | Star RegExpr
 
-literal :: Parser Char -> Parser RegexPattern.RegExpr
-literal c = do
-  l <- c
-  return (RegexPattern.Literal l)
-
+chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 
 -- expr
