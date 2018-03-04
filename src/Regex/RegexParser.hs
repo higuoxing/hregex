@@ -141,9 +141,60 @@ oneOf s = satisfy (flip elem s)
 --             | Con RegExpr RegExpr
 --             | Star RegExpr
 
-chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-metachars = "\b"
+chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+literal :: Parser Char
+literal = do
+  c <- oneOf chars
+  return c
+
+pset :: Set Char -> RegexPattern.RegExpr
+pset s
+  | Set.null cs  = RegexPattern.Literal c
+  | otherwise   = RegexPattern.Alt (RegexPattern.Literal c) $ pset cs
+  where
+    (c, cs) = pop s
+
+pop :: Set Char -> (Char, Set Char)
+pop s = (Set.elemAt 0 s, Set.deleteAt 0 s)
+
+postive_set :: Parser RegexPattern.RegExpr
+postive_set = do
+  reserved "["
+  s <- set_items
+  reserved "]"
+  return $ pset s
+
+negtive_set = do
+  reserved "[^"
+  s <- set_items
+  reserved "]"
+  return $ pset (Set.difference (Set.fromList chars) (s))
+
+set_items :: Parser (Set Char)
+set_items = do
+  s <- set_item
+  c <- set_items
+  return $ Set.union s c
+  <|> do
+  s <- set_item
+  return s
+
+set_item :: Parser (Set Char)
+set_item = do
+  r <- range
+  return $ Set.fromList r
+  <|> do
+  c <- literal
+  return $ Set.fromList [c]
+
+-- range :: Parser RegexPattern.RegExpr
+range :: Parser [Char]
+range = do
+  low  <- oneOf chars
+  reserved "-"
+  high <- oneOf chars
+  return [low..high]
 
 -- expr
 

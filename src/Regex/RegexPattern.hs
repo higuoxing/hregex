@@ -122,9 +122,8 @@ renum_tran i (Automata.Edge s0 c  s1) = Automata.Edge (s0+i) c  (s1+i)
 
 -- print the regex
 showRegex :: RegExpr -> String
-showRegex (Epsilon)     = "@"
-showRegex (Literal c)   = [c]
-showRegex (Alt re0 re1) = showRegex re0 ++ "|" ++ showRegex re1
-showRegex (Con re0 re1) = "(" ++ showRegex re0 ++ showRegex re1 ++ ")"
-showRegex (Star re)     = "(" ++ showRegex re ++ ")*"
-
+showRegex (Epsilon)       = "@"
+showRegex (Literal c)     = [c]
+showRegex (Alt re0 re1)   = showRegex re0 ++ "|" ++ showRegex re1
+showRegex (Con re0 re1)   = "(" ++ showRegex re0 ++ showRegex re1 ++ ")"
+showRegex (Star re)       = "(" ++ showRegex re ++ ")*"
