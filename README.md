@@ -8,6 +8,7 @@ $ stack build
 
 ### Features
 support:
+
 `?` The question mark indicates zero or one occurrences of the preceding element. For example, colou?r matches both "color" and "colour".
 
 `*` The asterisk indicates zero or more occurrences of the preceding element. For example, ab\*c matches "ac", "abc", "abbc", "abbbc", and so on.
