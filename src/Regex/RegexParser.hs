@@ -69,12 +69,12 @@ instance Alternative Parser where
   (<|>) = option
 
 -- run parser
-runRegexParser :: Parser a -> String -> a
+-- runRegexParser :: Parser a -> String -> a
 runRegexParser p s =
   case parse p s of
-    [(res, [])] -> res
-    [(_  , rs)] -> error "Parser did not complete parsing"
-    _           -> error "Parser error"
+    [(res, [])] -> [(res, [])]
+    [(res, rs)] -> [(res, rs)]
+    cs          -> cs
 
 -- get a item from String
 item :: Parser Char
@@ -142,6 +142,7 @@ oneOf s = satisfy (flip elem s)
 --             | Star RegExpr
 
 chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+metachars = "\b"
 
 
 -- expr
