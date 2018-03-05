@@ -150,6 +150,16 @@ oneOf s = satisfy (flip elem s)
 -- allowed ascii chars
 chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+dfa :: Parser (Automata (Set Int))
+dfa = do
+  n <- nfa
+  return $ Automata.subsetConstruct n
+
+nfa :: Parser (Automata Int)
+nfa = do
+  re <- regex
+  return $ RegexPattern.constructNFA re
+
 regex :: Parser RegexPattern.RegExpr
 regex = do
   u <- re_union
@@ -243,7 +253,7 @@ group = do
   reserved "("
   r <- regex
   reserved ")"
-  return r
+  return $ RegexPattern.Con r RegexPattern.Epsilon
 
 -- any from BNF regex
 anyChar :: Parser RegexPattern.RegExpr

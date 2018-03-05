@@ -1,5 +1,6 @@
 module Regex.RegexPattern (
-    RegExpr (..)
+    RegExpr (..)          , -- regex expr
+    constructNFA          , -- construct NFA from regex
     ) where
 
 import Data.Set (Set)
@@ -46,6 +47,12 @@ constructNFA :: RegExpr -> Automata Int
 constructNFA (Alt re0 re1) = r_alt  (constructNFA re0) (constructNFA re1)
 constructNFA (Con re0 re1) = r_con  (constructNFA re0) (constructNFA re1)
 constructNFA (Star re)     = r_star (constructNFA re)
+constructNFA (Epsilon)     = 
+  Automata.Automata (Set.fromList [0, 1])
+                    (Set.fromList [])
+                    (Set.fromList [Automata.Epsilon 0 1])
+                    0
+                    (Set.fromList [1])
 constructNFA (Literal ch)  = 
   Automata.Automata (Set.fromList [0..1]) 
                     (Set.fromList [ch])
@@ -125,5 +132,5 @@ showRegex :: RegExpr -> String
 showRegex (Epsilon)       = "@"
 showRegex (Literal c)     = [c]
 showRegex (Alt re0 re1)   = showRegex re0 ++ "|" ++ showRegex re1
-showRegex (Con re0 re1)   = "(" ++ showRegex re0 ++ showRegex re1 ++ ")"
+showRegex (Con re0 re1)   = showRegex re0 ++ showRegex re1
 showRegex (Star re)       = "(" ++ showRegex re ++ ")*"

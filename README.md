@@ -21,7 +21,14 @@ support:
 
 `()` Defines a marked subexpression. The string matched within the parentheses can be recalled later (see the next entry, \n). A marked subexpression is also called a block or capturing group.
 
+### Internal Automata
+DFA:
+![Automata](./doc/nfa0.png)
+
 ### TODO
+#### Most important
+improve the speed!
+
 `{m, n}` Matches the preceding element at least m and not more than n times. For example, a{3,5} matches only "aaa", "aaaa", and "aaaaa". This is not found in a few older instances of regexes.
 
 `$` Matches the ending position of the string or the position just before a string-ending newline. In line-based tools, it matches the ending position of any line.
