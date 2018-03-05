@@ -48,11 +48,11 @@ constructNFA (Alt re0 re1) = r_alt  (constructNFA re0) (constructNFA re1)
 constructNFA (Con re0 re1) = r_con  (constructNFA re0) (constructNFA re1)
 constructNFA (Star re)     = r_star (constructNFA re)
 constructNFA (Epsilon)     = 
-  Automata.Automata (Set.fromList [0, 1])
+  Automata.Automata (Set.fromList [0])
                     (Set.fromList [])
-                    (Set.fromList [Automata.Epsilon 0 1])
+                    (Set.fromList [])
                     0
-                    (Set.fromList [1])
+                    (Set.fromList [0])
 constructNFA (Literal ch)  = 
   Automata.Automata (Set.fromList [0..1]) 
                     (Set.fromList [ch])
