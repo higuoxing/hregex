@@ -47,7 +47,7 @@ initial state     :0
 acceptable states :fromList [37],"")]
 ```
 
-####DFA-test:
+#### DFA-test:
 ```bash
 *Regex.RegexParser> runRegexParser dfa "(m|f)ood"
 [(states            :fromList [fromList [0,1,3],fromList [2,5],fromList [4,5],fromList [6],fromList [7],fromList [8]]
