@@ -3,13 +3,6 @@
 module Regex.Automata (
      Automata    (..)   ,  -- Automata states transitions (initial state) (final states)
      Transition  (..)   ,  -- Transitions
---     subsetConstruct    ,  -- Subset construction
---     isEpsilon          ,  -- Indicates epsilon edge
---     getStates          ,  -- Get two states of an edge
---     getEdgeChar        ,  -- Get Char of an edge
---     epsilonClosure_T   ,  -- Get the epsilon closure of a set of state
---     move_T             ,  -- Get the set of state that transfer from state s via Char a
---     showAutomata          -- Print automata
     ) where
 
 import Data.Char
@@ -18,14 +11,14 @@ import qualified Data.Set as Set
 
 -- Finite Automata
 -- 1. Finite set of states
--- 2. Set of input char 
--- 3. Transition functions (state --(char | epsilon)--> next state)
+-- 2. Set of input chars 
+-- 3. Transition functions (state --((int, Int) | epsilon)--> next state)
 -- 4. Initial state
 -- 5. Subset of finite set of states which are final states
 data Automata state where
   Automata :: (Ord state, Show state) 
            => Set state
-           -> Set Char 
+           -> Set (Int, Int)
            -> Set (Transition state)
            -> state
            -> Set state
@@ -45,21 +38,28 @@ instance Show state => Show (Transition state) where
   show = showTrans
 
 -- disjoin a Set
-  -- Input  <- [(1, 3), (3, 5), (4, 7), (6, 10)]
-  -- Output -> [(1,3),(3,4),(4,5),(5,6),(6,7),(7,10)]
+  -- Input  <- [97, 99] [97, 100] [98, 108]
+  -- Output -> [97, 97] [98, 99], [100, 100], [101, 108]
 disjoin :: Set (Int, Int) -> Set (Int, Int)
-disjoin s = disjoin' s (Set.empty)
+disjoin s
+  | s0 == s1  = s0
+  | otherwise = disjoin s1
+  where
+    s0 = disjoin' s
+    s1 = disjoin' s0
 
-disjoin' :: Set (Int, Int) -> Set (Int, Int) -> Set (Int, Int)
-disjoin' s0 s1
+disjoin' :: Set (Int, Int) -> Set (Int, Int)
+disjoin' s = disjoin'' s (Set.empty)
+
+disjoin'' :: Set (Int, Int) -> Set (Int, Int) -> Set (Int, Int)
+disjoin'' s0 s1
   | Set.null s0 = s1
-  | otherwise = Set.insert (t0, t1) $ disjoin' s0' s1
+  | otherwise = Set.insert (t0, t1) $ disjoin'' s0' s1
   where
     ((t0, t1), s0') = nextRange s0
 
 -- to generate next range of chars
-  -- Input  <- [97, 99] [97, 100] [98, 108]
-  -- Output -> [97, 97] [98, 99], [100, 100], [101, 108]
+-- Time complexity: O(n*log(n))
   -- fix me!
   -- hard code map, and not so efficient, maybe update later :)
 nextRange :: Set (Int, Int) -> ((Int, Int), Set (Int, Int))
@@ -67,14 +67,13 @@ nextRange s
   | Set.size s >= 2 && t0 <  t1 && t1 <  t2                         = ((t0, t1  ), s0       )
   | Set.size s >= 2 && t0 <  t1 && t1 == t2 && t2 <  t3             = ((t0, t1-1), s1       )
   | Set.size s >= 2 && t0 <  t1 && t1 == t2 && t2 == t3             = ((t0, t1-1), s2       )
-  | Set.size s >= 2 && t0 <  t1 && t0 <  t2 && t1 >  t2 && t1 <  t3 = ((t0, t2)  , s3       )
-  | Set.size s >= 2 && t0 <  t1 && t0 == t2 && t1 >  t2 && t1 < t3  = ((t0, t2)  , s4       )
+  | Set.size s >= 2 && t0 <  t1 && t0 <  t2 && t1 >  t2 && t1 < t3  = ((t0, t2)  , s3       )
+  | Set.size s >= 2 && t0 <  t1 && t0 == t2 && t1 >  t2 && t1 < t3  = ((t0, t1)  , s4       )
   | Set.size s >= 2 && t0 <  t1 && t1 >  t2 && t1 == t3             = ((t0, t2)  , s5       )
   | Set.size s >= 2 && t0 <  t1 && t1 >  t2 && t1 >  t3 && t2 < t3  = ((t0, t2)  , s6       )
   | Set.size s >= 2 && t0 <  t1 && t1 >  t2 && t2 == t3             = ((t0, t2-1), s7       )
-  | Set.size s >= 2 && t0 == t1 && t1 <  t2 && t2 <  t3             = ((t0, t1)  , s8       )
-  | Set.size s >= 2 && t0 == t1 && t1 <  t2 && t2 == t3             = ((t0, t1)  , s9       )
-  | Set.size s >= 2 && t0 == t1 && t1 == t2 && t2 <  t3             = ((t0, t1)  , s10      )
+  | Set.size s >= 2 && t0 == t1 && t1 <  t2 && t2 <= t3             = ((t0, t1)  , s8       )
+  | Set.size s >= 2 && t0 == t1 && t1 == t2 && t2 <  t3             = ((t0, t1)  , s9       )
   | otherwise                                                       = ((t0, t1)  , Set.empty)
   where
     (t0, t1)  = Set.elemAt  0 s
@@ -89,8 +88,7 @@ nextRange s
     s6        = Set.union s'' $ Set.fromList [(t2+1 , t3), (t3+1, t1)]
     s7        = Set.union s'' $ Set.fromList [(t2   , t3), (t3+1, t1)]
     s8        = Set.union s'' $ Set.fromList [(t2   , t3)            ]
-    s9        = Set.union s'' $ Set.fromList [(t2   , t3)            ]
-    s10       = Set.union s'' $ Set.fromList [(t2+1 , t3)            ]
+    s9        = Set.union s'' $ Set.fromList [(t2+1 , t3)            ]
 
 -- -- get two states if an edge
 -- getStates :: Transition state -> (state, state)
