@@ -58,37 +58,39 @@ disjoin' s0 s1
     ((t0, t1), s0') = nextRange s0
 
 -- to generate next range of chars
-  -- Input  <- [(1, 3), (2, 4)]
-  -- Output -> ((1, 2), [(2, 3), (3, 4)])
+  -- Input  <- [97, 99] [97, 100] [98, 108]
+  -- Output -> [97, 97] [98, 99], [100, 100], [101, 108]
   -- fix me!
   -- hard code map, and not so efficient, maybe update later :)
 nextRange :: Set (Int, Int) -> ((Int, Int), Set (Int, Int))
 nextRange s
-  | Set.size s >= 2 && t0 < t1 && t1 <  t2 = ((t0, t1  ), s0)
-  | Set.size s >= 2 && t0 < t1 && t1 == t2 && t2 <  t3 = ((t0, t1-1), s1)
-  | Set.size s >= 2 && t0 < t1 && t1 == t2 && t2 == t3 = ((t0, t1-1), s2)
-  | Set.size s >= 2 && t0 < t1 && t1 >  t2 && t1 <  t3 = ((t0, t2), s3)
-  | Set.size s >= 2 && t0 < t1 && t1 >  t2 && t1 == t3 = ((t0, t2), s4)
-  | Set.size s >= 2 && t0 < t1 && t1 >  t2 && t1 >  t3 && t2 < t3 = ((t0, t2), s5)
-  | Set.size s >= 2 && t0 < t1 && t1 >  t2 && t2 == t3 = ((t0, t2-1), s6)
-  | Set.size s >= 2 && t0 == t1 && t1 < t2 && t2 < t3 = ((t0, t1), s7)
-  | Set.size s >= 2 && t0 == t1 && t1 < t2 && t2 == t3 = ((t0, t1), s8)
-  | Set.size s >= 2 && t0 == t1 && t1 == t2 && t2 < t3 = ((t0, t1), s9)
-  | otherwise = ((t0, t1), Set.fromList [])
+  | Set.size s >= 2 && t0 <  t1 && t1 <  t2                         = ((t0, t1  ), s0       )
+  | Set.size s >= 2 && t0 <  t1 && t1 == t2 && t2 <  t3             = ((t0, t1-1), s1       )
+  | Set.size s >= 2 && t0 <  t1 && t1 == t2 && t2 == t3             = ((t0, t1-1), s2       )
+  | Set.size s >= 2 && t0 <  t1 && t0 <  t2 && t1 >  t2 && t1 <  t3 = ((t0, t2)  , s3       )
+  | Set.size s >= 2 && t0 <  t1 && t0 == t2 && t1 >  t2 && t1 < t3  = ((t0, t2)  , s4       )
+  | Set.size s >= 2 && t0 <  t1 && t1 >  t2 && t1 == t3             = ((t0, t2)  , s5       )
+  | Set.size s >= 2 && t0 <  t1 && t1 >  t2 && t1 >  t3 && t2 < t3  = ((t0, t2)  , s6       )
+  | Set.size s >= 2 && t0 <  t1 && t1 >  t2 && t2 == t3             = ((t0, t2-1), s7       )
+  | Set.size s >= 2 && t0 == t1 && t1 <  t2 && t2 <  t3             = ((t0, t1)  , s8       )
+  | Set.size s >= 2 && t0 == t1 && t1 <  t2 && t2 == t3             = ((t0, t1)  , s9       )
+  | Set.size s >= 2 && t0 == t1 && t1 == t2 && t2 <  t3             = ((t0, t1)  , s10      )
+  | otherwise                                                       = ((t0, t1)  , Set.empty)
   where
     (t0, t1)  = Set.elemAt  0 s
     (t2, t3)  = Set.elemAt  1 s
     (s', s'') = Set.splitAt 2 s
-    s0        = Set.union s'' $ Set.fromList [(t2, t3)]
-    s1        = Set.union s'' $ Set.fromList [(t2, t2), (t2+1, t3)  ]
-    s2        = Set.union s'' $ Set.fromList [(t2, t2)              ]
-    s3        = Set.union s'' $ Set.fromList [(t2+1, t1), (t1+1, t3)]
-    s4        = Set.union s'' $ Set.fromList [(t1, t3)              ]
-    s5        = Set.union s'' $ Set.fromList [(t2+1, t3), (t3+1, t1)]
-    s6        = Set.union s'' $ Set.fromList [(t2, t3), (t3+1, t1)]
-    s7        = Set.union s'' $ Set.fromList [(t2, t3)]
-    s8        = Set.union s'' $ Set.fromList [(t2, t3)]
-    s9        = Set.union s'' $ Set.fromList [(t2+1, t3)]
+    s0        = Set.union s'' $ Set.fromList [(t2   , t3)            ]
+    s1        = Set.union s'' $ Set.fromList [(t2   , t2), (t2+1, t3)]
+    s2        = Set.union s'' $ Set.fromList [(t2   , t2)            ]
+    s3        = Set.union s'' $ Set.fromList [(t2+1 , t1), (t1+1, t3)]
+    s4        = Set.union s'' $ Set.fromList [(t1+1 , t3)            ]
+    s5        = Set.union s'' $ Set.fromList [(t1   , t3)            ]
+    s6        = Set.union s'' $ Set.fromList [(t2+1 , t3), (t3+1, t1)]
+    s7        = Set.union s'' $ Set.fromList [(t2   , t3), (t3+1, t1)]
+    s8        = Set.union s'' $ Set.fromList [(t2   , t3)            ]
+    s9        = Set.union s'' $ Set.fromList [(t2   , t3)            ]
+    s10       = Set.union s'' $ Set.fromList [(t2+1 , t3)            ]
 
 -- -- get two states if an edge
 -- getStates :: Transition state -> (state, state)
