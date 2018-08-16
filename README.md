@@ -1,5 +1,5 @@
-# Haskell-Re
-Yet another regular expression engine implementation in Haskell
+# hregex
+Yet another toy regular expression engine implementation in Haskell
 
 ### Build
 ```bash
